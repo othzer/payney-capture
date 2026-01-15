@@ -1,0 +1,11 @@
+# Copy this file to local.properties (which is gitignored) to override
+# machine-local settings without touching version-controlled files.
+
+# Path to your Android SDK install. Android Studio writes this automatically
+# on first sync -- you normally don't need to set it by hand.
+#sdk.dir=C\:\\Users\\yourname\\AppData\\Local\\Android\\Sdk
+
+# Uncomment to point the app at a real device via `adb reverse tcp:3000 tcp:3000`
+# or at a deployed PayNey backend, instead of the emulator-only default of
+# http://10.0.2.2:3000 defined in gradle.properties.
+#PAYNEY_API_BASE_URL=http://127.0.0.1:3000
