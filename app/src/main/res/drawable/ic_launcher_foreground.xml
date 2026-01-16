@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PayNey "P" logomark, matching the brand icon (see payney/public/payney-logomark.svg).
+     Path data is copied unchanged from that 512x512 SVG; viewportWidth/Height
+     match it 1:1 so no coordinate rescaling was needed. Its glyph bounding box
+     (x:138-334, y:99-413 of 512) sits well inside the adaptive-icon safe zone,
+     so it survives circle/squircle/rounded-square launcher masks unclipped. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M150,128 a29,29 0 0 1 29,-29 h6 a29,29 0 0 1 29,29 v256 a29,29 0 0 1 -29,29 h-6 a29,29 0 0 1 -29,-29 Z M236,100 a98,98 0 1 1 0,196 a98,98 0 1 1 0,-196 Z M236,152 a46,46 0 1 0 0,92 a46,46 0 1 0 0,-92 Z" />
+</vector>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base application theme. Compose owns all real UI styling (see Theme.kt);
+         this only sets the window background so there's no white flash before
+         the first Compose frame draws, and satisfies the manifest's theme requirement. -->
+    <style name="Theme.PayNeyCapture" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+        <item name="android:statusBarColor">@color/window_background</item>
+        <item name="android:navigationBarColor">@color/window_background</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>
