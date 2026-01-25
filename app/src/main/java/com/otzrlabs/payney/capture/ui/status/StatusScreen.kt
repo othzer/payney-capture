@@ -20,7 +20,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
@@ -32,6 +34,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,9 +43,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.otzrlabs.payney.capture.data.CaptureOutbox
 import com.otzrlabs.payney.capture.data.CapturePrefs
+import com.otzrlabs.payney.capture.data.CaptureRepository
 import com.otzrlabs.payney.capture.data.TokenStore
 import com.otzrlabs.payney.capture.ui.theme.PayNeyColors
+import kotlinx.coroutines.launch
 
 @Composable
 fun StatusScreen(
@@ -55,6 +61,9 @@ fun StatusScreen(
     var notificationAccessGranted by remember { mutableStateOf(hasNotificationAccess(context)) }
     var captureEnabled by remember { mutableStateOf(CapturePrefs.captureEnabled) }
     var lastSyncMillis by remember { mutableStateOf(CapturePrefs.lastSyncMillis) }
+    var queuedCount by remember { mutableStateOf(CaptureOutbox.size()) }
+    var syncing by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     // Permission/notification-access state and last-sync time can all change
     // while this screen isn't visible (system dialog, Settings, a background
@@ -67,6 +76,7 @@ fun StatusScreen(
                 smsGranted = hasSmsPermission(context)
                 notificationAccessGranted = hasNotificationAccess(context)
                 lastSyncMillis = CapturePrefs.lastSyncMillis
+                queuedCount = CaptureOutbox.size()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -176,6 +186,39 @@ fun StatusScreen(
                 value = formatLastSync(lastSyncMillis),
                 valueIsPositive = null,
             )
+            StatusRow(
+                label = "Waiting to send",
+                value = if (queuedCount == 0) "Nothing queued" else "$queuedCount capture(s)",
+                valueIsPositive = null,
+            )
+            // Manual retry for the offline outbox — normally it drains on its
+            // own (next capture, or connectivity coming back), but this gives
+            // an immediate, visible way to push queued captures through.
+            TextButton(
+                onClick = {
+                    scope.launch {
+                        syncing = true
+                        try {
+                            CaptureRepository.flushOutbox()
+                        } finally {
+                            queuedCount = CaptureOutbox.size()
+                            lastSyncMillis = CapturePrefs.lastSyncMillis
+                            syncing = false
+                        }
+                    }
+                },
+                enabled = !syncing,
+                modifier = Modifier.align(Alignment.End),
+            ) {
+                if (syncing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                    )
+                } else {
+                    Text("Sync now")
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(8.dp))

@@ -68,6 +68,9 @@ object CaptureOutbox {
     @Synchronized
     fun isEmpty(): Boolean = all().isEmpty()
 
+    @Synchronized
+    fun size(): Int = all().size
+
     private fun save(items: List<PendingCapture>) {
         prefs.edit().putString(KEY_ITEMS, json.encodeToString(items)).apply()
     }
