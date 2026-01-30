@@ -26,7 +26,25 @@ import kotlinx.coroutines.launch
  */
 class NotificationCaptureService : NotificationListenerService() {
 
+    private companion object {
+        // Apps re-post the same notification when they update it (progress,
+        // grouping, etc.), which would forward identical text several times in
+        // a row. The backend dedupes too, but each duplicate still costs a
+        // network call and potentially a server-side LLM parse.
+        const val DUPLICATE_WINDOW_MS = 10 * 60 * 1000L
+    }
+
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val recentCaptures = HashMap<String, Long>()
+
+    @Synchronized
+    private fun isRecentDuplicate(text: String): Boolean {
+        val now = System.currentTimeMillis()
+        recentCaptures.entries.removeAll { now - it.value > DUPLICATE_WINDOW_MS }
+        val duplicate = recentCaptures.containsKey(text)
+        recentCaptures[text] = now
+        return duplicate
+    }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         if (!CapturePrefs.captureEnabled || !TokenStore.hasToken()) return
@@ -47,6 +65,7 @@ class NotificationCaptureService : NotificationListenerService() {
         val body = bigText.ifBlank { text }
         val combined = listOf(title, body).filter { it.isNotBlank() }.joinToString(separator = "\n")
         if (combined.isBlank()) return
+        if (isRecentDuplicate(combined)) return
 
         serviceScope.launch {
             CaptureRepository.forwardCapture(sourceChannel = "notification", rawText = combined)
