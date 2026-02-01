@@ -68,7 +68,11 @@ class NotificationCaptureService : NotificationListenerService() {
         if (isRecentDuplicate(combined)) return
 
         serviceScope.launch {
-            CaptureRepository.forwardCapture(sourceChannel = "notification", rawText = combined)
+            CaptureRepository.forwardCapture(
+                sourceChannel = "notification",
+                rawText = combined,
+                eventTimeMillis = sbn.postTime,
+            )
         }
     }
 

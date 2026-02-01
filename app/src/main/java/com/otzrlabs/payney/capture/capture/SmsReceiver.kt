@@ -43,9 +43,7 @@ class SmsReceiver : BroadcastReceiver() {
         // A single broadcast carries all PDU parts of one multi-part SMS from
         // one sender, so grouping by sender and concatenating bodies
         // reassembles the full message text.
-        val bodyBySender = messages
-            .groupBy { it.originatingAddress.orEmpty() }
-            .mapValues { (_, parts) -> parts.joinToString(separator = "") { it.messageBody.orEmpty() } }
+        val partsBySender = messages.groupBy { it.originatingAddress.orEmpty() }
 
         // onReceive must return quickly or the system may consider it
         // unresponsive, but forwarding is a suspend network call -- goAsync()
@@ -53,7 +51,8 @@ class SmsReceiver : BroadcastReceiver() {
         val pendingResult = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                for ((sender, body) in bodyBySender) {
+                for ((sender, parts) in partsBySender) {
+                    val body = parts.joinToString(separator = "") { it.messageBody.orEmpty() }
                     if (body.isBlank()) continue
                     val allowed = AllowList.isAllowedSmsSender(sender)
                     // If a bank SMS is being dropped, `adb logcat -s SmsReceiver`
@@ -62,7 +61,13 @@ class SmsReceiver : BroadcastReceiver() {
                         Log.d(TAG, "SMS from '$sender' allowed=$allowed")
                     }
                     if (!allowed) continue
-                    CaptureRepository.forwardCapture(sourceChannel = "sms", rawText = body)
+                    CaptureRepository.forwardCapture(
+                        sourceChannel = "sms",
+                        rawText = body,
+                        // The SMSC delivery timestamp — when the bank actually
+                        // sent the message, not when we got around to forwarding.
+                        eventTimeMillis = parts.first().timestampMillis,
+                    )
                 }
             } finally {
                 pendingResult.finish()

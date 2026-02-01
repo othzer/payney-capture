@@ -26,12 +26,18 @@ object CaptureRepository {
 
     private const val TAG = "CaptureRepository"
 
-    suspend fun forwardCapture(sourceChannel: String, rawText: String) {
+    /**
+     * [eventTimeMillis] is when the underlying event actually happened (SMS
+     * delivery time, notification post time) — NOT "now". It rides along as the
+     * ingest `timestamp` so the backend can date the transaction correctly even
+     * when the capture spends hours in the offline outbox first.
+     */
+    suspend fun forwardCapture(sourceChannel: String, rawText: String, eventTimeMillis: Long? = null) {
         // Opportunistically drain anything queued from an earlier offline period
         // first, so ordering stays roughly chronological.
         flushOutbox()
 
-        val timestamp = Instant.now().toString()
+        val timestamp = Instant.ofEpochMilli(eventTimeMillis ?: System.currentTimeMillis()).toString()
         if (trySend(sourceChannel, rawText, timestamp)) {
             CapturePrefs.lastSyncMillis = System.currentTimeMillis()
         } else {
