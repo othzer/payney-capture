@@ -19,6 +19,7 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 import java.io.IOException
+import java.time.Instant
 
 // Flow: Idle --upload--> Uploading --> Extracted (editable form) --save--> Saving --> Saved.
 // A hard failure (network/HTTP/unreadable image) goes to Error, which offers a retake.
@@ -55,8 +56,14 @@ class ScanReceiptViewModel : ViewModel() {
     // Kept as-is from extraction and passed straight back on confirm; not edited.
     private var extractedDateIso: String? = null
 
+    // When OCR can't read a date off the receipt, fall back to when the photo
+    // was taken — closer to the actual purchase than whenever "Save" finally
+    // succeeds (e.g. after retries on flaky network).
+    private var capturedAtIso: String? = null
+
     fun onPhotoCaptured(uri: Uri) {
         capturedImageUri = uri
+        capturedAtIso = Instant.now().toString()
         uploadState = ReceiptUploadState.Idle
         formError = null
     }
@@ -126,7 +133,7 @@ class ScanReceiptViewModel : ViewModel() {
                     ReceiptConfirmRequest(
                         amount = amount,
                         merchant = merchantInput.trim().ifBlank { null },
-                        date = extractedDateIso,
+                        date = extractedDateIso ?: capturedAtIso,
                         category = suggestedCategory,
                     ),
                 )
