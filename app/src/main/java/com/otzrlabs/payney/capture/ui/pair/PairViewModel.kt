@@ -43,8 +43,10 @@ class PairViewModel : ViewModel() {
                 TokenStore.saveToken(response.token)
                 onSuccess()
             } catch (e: HttpException) {
+                // The backend answers 404 for an unknown code and 410 for one
+                // that's already been used or has expired.
                 errorMessage = when (e.code()) {
-                    400, 401, 404 -> "Invalid or expired pairing code"
+                    400, 401, 404, 410 -> "Invalid or expired pairing code"
                     else -> "Something went wrong (HTTP ${e.code()}). Please try again."
                 }
             } catch (e: IOException) {
