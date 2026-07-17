@@ -19,6 +19,13 @@ val apiBaseUrl: String = (localProperties.getProperty("PAYNEY_API_BASE_URL")
     ?: providers.gradleProperty("PAYNEY_API_BASE_URL").orNull
     ?: "http://10.0.2.2:3000")
 
+// Release builds ignore the machine-local debug URL and always target the
+// deployed backend, so a distributed APK can never accidentally ship pointing
+// at localhost. Overridable via local/gradle properties if the deploy moves.
+val releaseApiBaseUrl: String = (localProperties.getProperty("PAYNEY_RELEASE_API_BASE_URL")
+    ?: providers.gradleProperty("PAYNEY_RELEASE_API_BASE_URL").orNull
+    ?: "https://payney.vercel.app")
+
 // Release signing, machine-local like the API base URL above -- keystore path
 // and passwords live in local.properties (gitignored), never committed.
 val releaseStoreFile = localProperties.getProperty("RELEASE_STORE_FILE")
@@ -58,6 +65,8 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // Override the debug default: distributed APKs hit the deployed backend.
+            buildConfigField("String", "API_BASE_URL", "\"$releaseApiBaseUrl\"")
             if (releaseStoreFile != null) {
                 signingConfig = signingConfigs.getByName("release")
             }
