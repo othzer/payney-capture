@@ -12,3 +12,5 @@ local.properties
 /app/release
 *.hprof
 /.claude/
+*.jks
+*.keystore

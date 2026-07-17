@@ -19,6 +19,13 @@ val apiBaseUrl: String = (localProperties.getProperty("PAYNEY_API_BASE_URL")
     ?: providers.gradleProperty("PAYNEY_API_BASE_URL").orNull
     ?: "http://10.0.2.2:3000")
 
+// Release signing, machine-local like the API base URL above -- keystore path
+// and passwords live in local.properties (gitignored), never committed.
+val releaseStoreFile = localProperties.getProperty("RELEASE_STORE_FILE")
+val releaseStorePassword = localProperties.getProperty("RELEASE_STORE_PASSWORD")
+val releaseKeyAlias = localProperties.getProperty("RELEASE_KEY_ALIAS")
+val releaseKeyPassword = localProperties.getProperty("RELEASE_KEY_PASSWORD")
+
 android {
     namespace = "com.otzrlabs.payney.capture"
     compileSdk = 36
@@ -33,6 +40,17 @@ android {
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
     }
 
+    signingConfigs {
+        if (releaseStoreFile != null) {
+            create("release") {
+                storeFile = rootProject.file(releaseStoreFile)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -40,6 +58,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            if (releaseStoreFile != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 
