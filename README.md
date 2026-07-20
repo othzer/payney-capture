@@ -230,7 +230,7 @@ Contributions are always welcome.
 
 ## ⭐ Support
 
-If you found Rigpaz useful,
+If you found it useful,
 
 please consider giving the repository a ⭐.
 
