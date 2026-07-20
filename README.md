@@ -216,6 +216,28 @@ app/src/main/java/com/otzrlabs/payney/capture/
 
 ---
 
+## 🤝 Contributing
+
+Contributions are always welcome.
+
+1. Star the repository
+2. Fork the repository
+3. Create a feature branch
+4. Commit your changes
+5. Open a Pull Request
+
+---
+
+## ⭐ Support
+
+If you found Rigpaz useful,
+
+please consider giving the repository a ⭐.
+
+It helps more than you think.
+
+---
+
 ## License
 
 Proprietary — © OtzrLabs. All rights reserved.
